@@ -19,10 +19,10 @@ public class ChanTest {
             final var end = new AtomicBoolean();
             while (!end.get()) {
                 new Select()
-                        .send(ch, num.get(), () -> {
+                        .send(ch, num.get(), (ok) -> {
                             num.addAndGet(1);
                         })
-                        .recv(stop, (result) -> {
+                        .recv(stop, (result, ok) -> {
                             end.set(true);
                         })
                         .Go();
@@ -50,7 +50,7 @@ public class ChanTest {
         }
         stop.send(0);
         new Select()
-                .recv(ch, (result) -> {
+                .recv(ch, (result, ok) -> {
                     fail("got result after stopping thread");
                 })
                 .def(() -> {
@@ -70,11 +70,11 @@ public class ChanTest {
         final var t2 = range(ch2, stop, "range2");
         while (num1.get() < 9999 && num2.get() < 9999) {
             new Select()
-                    .recv(ch1, (result) -> {
+                    .recv(ch1, (result, ok) -> {
                         final var i = num1.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
-                    .recv(ch2, (result) -> {
+                    .recv(ch2, (result, ok) -> {
                         final var i = num2.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
@@ -84,10 +84,10 @@ public class ChanTest {
         stop.send(0);
         stop.send(0);
         new Select()
-                .recv(ch1, (result) -> {
+                .recv(ch1, (result, ok) -> {
                     fail("got result after stopping thread 1");
                 })
-                .recv(ch2, (result) -> {
+                .recv(ch2, (result, ok) -> {
                     fail("got result after stopping thread 2");
                 })
                 .def(() -> {

@@ -26,6 +26,8 @@ abstract class TX<T> implements Comparable<TX> {
         return completer.get() != null;
     }
 
+    abstract void close();
+
     abstract boolean quick();
 
     abstract void runResult();
@@ -69,8 +71,12 @@ class SendTX<T> extends TX<T> {
 
     void runResult() {
         if (result != null) {
-            result.run();
+            result.run(true);
         }
+    }
+
+    void close() {
+        throw new RuntimeException("close not implemented");
     }
 
     void put() {
@@ -115,8 +121,12 @@ class RecvTX<T> extends TX<T> {
 
     void runResult() {
         if (result != null) {
-            result.run(value.get());
+            result.run(value.get(), true);
         }
+    }
+
+    void close() {
+        throw new RuntimeException("close not implemented");
     }
 
     void put() {

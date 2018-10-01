@@ -1,5 +1,5 @@
 package uk.org.binky.jchan;
 
 public interface SendResult {
-    void run();
+    void run(final boolean ok);
 }

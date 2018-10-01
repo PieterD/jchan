@@ -2,6 +2,7 @@ package uk.org.binky.jchan;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -11,6 +12,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     private final long id;
     private final List<RecvTX<T>> recvers = new ArrayList<>();
     private final List<SendTX<T>> senders = new ArrayList<>();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     static <T> Chan<T> asChan(final SChan<T> sch) {
         if (sch instanceof Chan) {
@@ -31,8 +33,8 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     public T recv() {
-        final var rv = new AtomicReference<T>();
-        new Select().recv(this, (result) -> {
+        final var rv = new AtomicReference<T>(null);
+        new Select().recv(this, (result, ok) -> {
             rv.set(result);
         }).Go();
         return rv.get();
@@ -40,6 +42,13 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
 
     public void send(final T value) {
         new Select().send(this, value, null).Go();
+    }
+
+    public synchronized void close() {
+        if (!closed.compareAndSet(false, true)) {
+            throw new ChannelAlreadyClosedException("this channel was already closed");
+        }
+        throw new RuntimeException("close not implemented");
     }
 
     public RChan asRecvOnly() {
