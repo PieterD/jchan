@@ -9,13 +9,13 @@ public class Select {
     private DefaultResult defaultResult;
     private boolean multipleDefaults = false;
 
-    public <T> Select send(final Chan<T> ch, final T value, final SendResult r) {
-        transactions.add(new SendTX<T>(ch, completer, value, r));
+    public <T> Select send(final SChan<T> sch, final T value, final SendResult r) {
+        transactions.add(new SendTX<>(Chan.asChan(sch), completer, value, r));
         return this;
     }
 
-    public <T> Select recv(final Chan<T> ch, final RecvResult<T> r) {
-        transactions.add(new RecvTX<T>(ch, completer, r));
+    public <T> Select recv(final RChan<T> rch, final RecvResult<T> r) {
+        transactions.add(new RecvTX<>(Chan.asChan(rch), completer, r));
         return this;
     }
 

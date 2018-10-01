@@ -5,12 +5,26 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Chan<T> implements Comparable<Chan> {
+public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     private static final AtomicLong idGenerator = new AtomicLong();
 
     private final long id;
     private final List<RecvTX<T>> recvers = new ArrayList<>();
     private final List<SendTX<T>> senders = new ArrayList<>();
+
+    static <T> Chan<T> asChan(final SChan<T> sch) {
+        if (sch instanceof Chan) {
+            return (Chan<T>)sch;
+        }
+        throw new InvalidChannelException("invalid channel type");
+    }
+
+    static <T> Chan<T> asChan(final RChan<T> rch) {
+        if (rch instanceof Chan) {
+            return (Chan<T>)rch;
+        }
+        throw new InvalidChannelException("invalid channel type");
+    }
 
     public Chan() {
         id = idGenerator.getAndAdd(1);
@@ -26,6 +40,14 @@ public class Chan<T> implements Comparable<Chan> {
 
     public void send(final T value) {
         new Select().send(this, value, null).Go();
+    }
+
+    public RChan asRecvOnly() {
+        return this;
+    }
+
+    public SChan asSendOnly() {
+        return this;
     }
 
     @Override

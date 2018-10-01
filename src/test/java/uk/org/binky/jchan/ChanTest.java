@@ -45,15 +45,16 @@ public class ChanTest {
         final var stop = new Chan<Integer>();
         final var ch = new Chan<Integer>();
         final var t = range(ch, stop);
-        for (int i=0; i<99999; i++) {
+        for (int i = 0; i < 99999; i++) {
             assertEquals(Integer.valueOf(i), ch.recv());
         }
         stop.send(0);
         new Select()
-                .recv(ch, (result)->{
+                .recv(ch, (result) -> {
                     fail("got result after stopping thread");
                 })
-                .def(() -> {})
+                .def(() -> {
+                })
                 .Go();
         join(t);
     }
@@ -69,11 +70,11 @@ public class ChanTest {
         final var t2 = range(ch2, stop, "range2");
         while (num1.get() < 9999 && num2.get() < 9999) {
             new Select()
-                    .recv(ch1, (result)->{
+                    .recv(ch1, (result) -> {
                         final var i = num1.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
-                    .recv(ch2, (result)->{
+                    .recv(ch2, (result) -> {
                         final var i = num2.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
@@ -83,13 +84,14 @@ public class ChanTest {
         stop.send(0);
         stop.send(0);
         new Select()
-                .recv(ch1, (result)->{
+                .recv(ch1, (result) -> {
                     fail("got result after stopping thread 1");
                 })
-                .recv(ch2, (result)->{
+                .recv(ch2, (result) -> {
                     fail("got result after stopping thread 2");
                 })
-                .def(() -> {})
+                .def(() -> {
+                })
                 .Go();
         join(t1);
         join(t2);
