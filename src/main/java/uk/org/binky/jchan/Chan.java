@@ -24,6 +24,10 @@ public class Chan<T> implements Comparable<Chan> {
         return rv.get();
     }
 
+    public void send(final T value) {
+        new Select().send(this, value, null).Go();
+    }
+
     @Override
     public int compareTo(final Chan o) {
         return Long.compare(this.id, o.id);

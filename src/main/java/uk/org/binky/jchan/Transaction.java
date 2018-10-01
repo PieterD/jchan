@@ -68,7 +68,9 @@ class SendTX<T> extends TX<T> {
     }
 
     void runResult() {
-        result.run();
+        if (result != null) {
+            result.run();
+        }
     }
 
     void put() {
@@ -106,13 +108,15 @@ class RecvTX<T> extends TX<T> {
                 return false;
             }
             setValue(stx.getValue());
-            thread.notify();
+            thread.notifyAll();
         }
         return true;
     }
 
     void runResult() {
-        result.run(value.get());
+        if (result != null) {
+            result.run(value.get());
+        }
     }
 
     void put() {

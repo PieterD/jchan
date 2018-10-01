@@ -19,7 +19,7 @@ public class Select {
         return this;
     }
 
-    public Select Default(final DefaultResult r) {
+    public Select def(final DefaultResult r) {
         if (defaultResult != null) {
             multipleDefaults = true;
         }
@@ -83,16 +83,16 @@ public class Select {
         }
         // Blocking loop.
         final Thread thread = Thread.currentThread();
-        while (completer.get() == null) {
-            try {
-                synchronized (thread) {
+        synchronized (thread) {
+            while (completer.get() == null) {
+                try {
                     thread.wait();
+                } catch (final InterruptedException e) {
+                    throw new SelectInterruptedException("Select was interrupted", e);
                 }
-            } catch (final InterruptedException e) {
-                throw new SelectInterruptedException("Select was interrupted", e);
-            }
-            if (thread.isInterrupted()) {
-                throw new SelectInterruptedException("Select was interrupted");
+                if (thread.isInterrupted()) {
+                    throw new SelectInterruptedException("Select was interrupted");
+                }
             }
         }
         // We don't have to lock all the channels to remove stale transactions.
