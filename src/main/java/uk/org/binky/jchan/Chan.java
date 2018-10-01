@@ -48,7 +48,14 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
         if (!closed.compareAndSet(false, true)) {
             throw new ChannelAlreadyClosedException("this channel was already closed");
         }
-        throw new RuntimeException("close not implemented");
+        for (final RecvTX<T> tx : recvers) {
+            tx.tryComplete(null);
+        }
+        recvers.clear();
+        for (final SendTX<T> tx : senders) {
+            tx.tryComplete(null);
+        }
+        senders.clear();
     }
 
     public RChan asRecvOnly() {
@@ -65,6 +72,9 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     synchronized boolean complete(final SendTX<T> stx) {
+        if (closed.get()) {
+            throw new SendOnClosedChannelException("attempted to send on a closed channel");
+        }
         for (int i = 0; i < recvers.size(); i++) {
             final var rtx = recvers.get(i);
             //TODO: we could remove completed transactions.
@@ -77,6 +87,10 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     synchronized boolean complete(final RecvTX<T> rtx) {
+        if (closed.get()) {
+            rtx.close();
+            return true;
+        }
         for (int i = 0; i < senders.size(); i++) {
             final var stx = senders.get(i);
             //TODO: we could remove completed transactions.

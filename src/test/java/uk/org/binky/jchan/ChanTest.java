@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class ChanTest {
@@ -48,7 +49,7 @@ public class ChanTest {
         for (int i = 0; i < 99999; i++) {
             assertEquals(Integer.valueOf(i), ch.recv());
         }
-        stop.send(0);
+        stop.close();
         new Select()
                 .recv(ch, (result, ok) -> {
                     fail("got result after stopping thread");
@@ -80,9 +81,7 @@ public class ChanTest {
                     })
                     .Go();
         }
-        //TODO: close!
-        stop.send(0);
-        stop.send(0);
+        stop.close();
         new Select()
                 .recv(ch1, (result, ok) -> {
                     fail("got result after stopping thread 1");
@@ -93,6 +92,7 @@ public class ChanTest {
                 .def(() -> {
                 })
                 .Go();
+        assertNull(stop.recv());
         join(t1);
         join(t2);
     }

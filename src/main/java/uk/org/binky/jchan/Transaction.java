@@ -1,5 +1,6 @@
 package uk.org.binky.jchan;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 abstract class TX<T> implements Comparable<TX> {
@@ -40,6 +41,7 @@ abstract class TX<T> implements Comparable<TX> {
 class SendTX<T> extends TX<T> {
     private final T value;
     private final SendResult result;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     SendTX(final Chan<T> ch, final AtomicReference<TX> completer, final T value, final SendResult result) {
         super(ch, completer);
@@ -63,20 +65,27 @@ class SendTX<T> extends TX<T> {
             if (!completer.compareAndSet(null, this)) {
                 return false;
             }
-            rtx.setValue(getValue());
+            if (rtx == null) {
+                close();
+            } else {
+                rtx.setValue(getValue());
+            }
             thread.notify();
         }
         return true;
     }
 
     void runResult() {
+        if (closed.get()) {
+            throw new SendOnClosedChannelException("attempted to send on a closed channel");
+        }
         if (result != null) {
             result.run(true);
         }
     }
 
     void close() {
-        throw new RuntimeException("close not implemented");
+        closed.set(true);
     }
 
     void put() {
@@ -91,6 +100,7 @@ class SendTX<T> extends TX<T> {
 class RecvTX<T> extends TX<T> {
     private final RecvResult<T> result;
     private final AtomicReference<T> value = new AtomicReference<>();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     RecvTX(final Chan<T> ch, final AtomicReference<TX> completer, final RecvResult<T> result) {
         super(ch, completer);
@@ -113,7 +123,12 @@ class RecvTX<T> extends TX<T> {
             if (!completer.compareAndSet(null, this)) {
                 return false;
             }
-            setValue(stx.getValue());
+            if (stx == null) {
+                close();
+            } else {
+                setValue(stx.getValue());
+            }
+            //TODO: Maybe notify instead of notifyAll?
             thread.notifyAll();
         }
         return true;
@@ -121,12 +136,16 @@ class RecvTX<T> extends TX<T> {
 
     void runResult() {
         if (result != null) {
+            if (closed.get()) {
+                result.run(null, false);
+                return;
+            }
             result.run(value.get(), true);
         }
     }
 
     void close() {
-        throw new RuntimeException("close not implemented");
+        closed.set(true);
     }
 
     void put() {
