@@ -1,5 +1,9 @@
 package uk.org.binky.jchan;
 
+import uk.org.binky.jchan.exceptions.ChannelAlreadyClosedException;
+import uk.org.binky.jchan.exceptions.InvalidChannelException;
+import uk.org.binky.jchan.exceptions.SendOnClosedChannelException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;

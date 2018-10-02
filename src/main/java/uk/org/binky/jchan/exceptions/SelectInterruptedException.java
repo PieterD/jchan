@@ -1,4 +1,4 @@
-package uk.org.binky.jchan;
+package uk.org.binky.jchan.exceptions;
 
 public class SelectInterruptedException extends RuntimeException {
     public SelectInterruptedException(final String msg) {

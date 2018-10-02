@@ -1,5 +1,11 @@
 package uk.org.binky.jchan;
 
+import uk.org.binky.jchan.exceptions.SelectException;
+import uk.org.binky.jchan.exceptions.SelectInterruptedException;
+import uk.org.binky.jchan.results.DefaultResult;
+import uk.org.binky.jchan.results.RecvResult;
+import uk.org.binky.jchan.results.SendResult;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 

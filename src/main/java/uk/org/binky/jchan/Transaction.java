@@ -1,5 +1,9 @@
 package uk.org.binky.jchan;
 
+import uk.org.binky.jchan.exceptions.SendOnClosedChannelException;
+import uk.org.binky.jchan.results.RecvResult;
+import uk.org.binky.jchan.results.SendResult;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
