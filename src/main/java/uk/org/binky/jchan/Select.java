@@ -109,6 +109,10 @@ public class Select {
         completer.get().runResult();
     }
 
+    private interface LockRunner {
+        TX run();
+    }
+
     private TX<?> lockChannels(final LockRunner r) {
         // Sort on channels to prevent deadlock
         Collections.sort(transactions);
