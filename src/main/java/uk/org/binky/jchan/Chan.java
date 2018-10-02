@@ -32,7 +32,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     public T recv() {
-        final var rv = new AtomicReference<T>(null);
+        final AtomicReference<T> rv = new AtomicReference<>(null);
         new Select().recv(this, (result, ok) -> {
             rv.set(result);
         }).Go();
@@ -76,7 +76,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
             throw new SendOnClosedChannelException("attempted to send on a closed channel");
         }
         for (int i = 0; i < recvers.size(); i++) {
-            final var rtx = recvers.get(i);
+            final RecvTX<T> rtx = recvers.get(i);
             //TODO: we could remove completed transactions.
             if (rtx.tryComplete(stx)) {
                 recvers.remove(i);
@@ -92,7 +92,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
             return true;
         }
         for (int i = 0; i < senders.size(); i++) {
-            final var stx = senders.get(i);
+            final SendTX<T> stx = senders.get(i);
             //TODO: we could remove completed transactions.
             if (stx.tryComplete(rtx)) {
                 senders.remove(i);

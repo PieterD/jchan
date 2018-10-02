@@ -36,7 +36,7 @@ public class Select {
         }
         final Set<Chan<?>> set = new HashSet<>();
         for (final TX transaction : transactions) {
-            final var ch = transaction.chan();
+            final Chan<?> ch = transaction.chan();
             if (set.contains(ch)) {
                 throw new SelectException("Select has multiple instances of the same channel");
             }
@@ -62,7 +62,7 @@ public class Select {
         // No default statement, so we block.
         // To do that, we have to register our transactions
         // with all channels, and to do that we need to lock them all.
-        final var tx = lockChannels(() -> {
+        final TX<?> tx = lockChannels(() -> {
             // One last chance to prevent us from sleeping;
             // someone may have come in before we locked all the channels.
             for (final TX transaction : transactions) {
@@ -103,7 +103,7 @@ public class Select {
         completer.get().runResult();
     }
 
-    private TX lockChannels(final LockRunner r) {
+    private TX<?> lockChannels(final LockRunner r) {
         // Sort on channels to prevent deadlock
         Collections.sort(transactions);
         return lockRecurse(0, () -> {
@@ -113,11 +113,11 @@ public class Select {
         });
     }
 
-    private TX lockRecurse(final int i, final LockRunner r) {
+    private TX<?> lockRecurse(final int i, final LockRunner r) {
         if (i >= transactions.size()) {
             return r.run();
         }
-        final var tx = transactions.get(i);
+        final TX<?> tx = transactions.get(i);
         synchronized (tx.chan()) {
             return lockRecurse(i + 1, r);
         }

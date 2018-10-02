@@ -14,8 +14,8 @@ public class ChanTest {
 
     private Thread range(final Chan<Integer> ch, final Chan<Integer> stop, final String name) {
         final Thread t = new Thread(() -> {
-            final var num = new AtomicInteger();
-            final var end = new AtomicBoolean();
+            final AtomicInteger num = new AtomicInteger();
+            final AtomicBoolean end = new AtomicBoolean();
             while (!end.get()) {
                 new Select()
                         .send(ch, num.get(), (ok) -> {
@@ -41,9 +41,9 @@ public class ChanTest {
 
     @Test
     public void testSimpleRange() {
-        final var stop = new Chan<Integer>();
-        final var ch = new Chan<Integer>();
-        final var t = range(ch, stop);
+        final Chan<Integer> stop = new Chan<>();
+        final Chan<Integer> ch = new Chan<>();
+        final Thread t = range(ch, stop);
         for (int i = 0; i < 99999; i++) {
             assertEquals(Integer.valueOf(i), ch.recv());
         }
@@ -60,21 +60,21 @@ public class ChanTest {
 
     @Test
     public void testMultiRangeClose() {
-        final var stop = new Chan<Integer>();
-        final var ch1 = new Chan<Integer>();
-        final var ch2 = new Chan<Integer>();
-        final var num1 = new AtomicInteger();
-        final var num2 = new AtomicInteger();
-        final var t1 = range(ch1, stop, "range1");
-        final var t2 = range(ch2, stop, "range2");
+        final Chan<Integer> stop = new Chan<>();
+        final Chan<Integer> ch1 = new Chan<>();
+        final Chan<Integer> ch2 = new Chan<>();
+        final AtomicInteger num1 = new AtomicInteger();
+        final AtomicInteger num2 = new AtomicInteger();
+        final Thread t1 = range(ch1, stop, "range1");
+        final Thread t2 = range(ch2, stop, "range2");
         while (num1.get() < 9999 && num2.get() < 9999) {
             new Select()
                     .recv(ch1, (result, ok) -> {
-                        final var i = num1.getAndAdd(1);
+                        final int i = num1.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
                     .recv(ch2, (result, ok) -> {
-                        final var i = num2.getAndAdd(1);
+                        final int i = num2.getAndAdd(1);
                         assertEquals(Integer.valueOf(i), result);
                     })
                     .Go();
