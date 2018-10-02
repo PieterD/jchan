@@ -27,8 +27,6 @@ abstract class TX<T> implements Comparable<TX> {
         return completer.get() != null;
     }
 
-    abstract void close();
-
     abstract boolean quick();
 
     abstract void runResult();
@@ -60,6 +58,7 @@ class SendTX<T> extends TX<T> {
     }
 
     // Called by Chan to attempt to complete the transaction
+    // rtx can be null when called from Chan.close.
     boolean tryComplete(final RecvTX<T> rtx) {
         synchronized (thread) {
             if (!completer.compareAndSet(null, this)) {
@@ -84,7 +83,7 @@ class SendTX<T> extends TX<T> {
         }
     }
 
-    void close() {
+    private void close() {
         closed.set(true);
     }
 
@@ -117,7 +116,8 @@ class RecvTX<T> extends TX<T> {
         return ch.complete(this);
     }
 
-    // Called by Chan to attempt to complete the transaction
+    // Called by Chan to attempt to complete the transaction.
+    // stx can be null when called from Chan.close.
     boolean tryComplete(final SendTX<T> stx) {
         synchronized (thread) {
             if (!completer.compareAndSet(null, this)) {

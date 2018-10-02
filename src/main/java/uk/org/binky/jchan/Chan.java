@@ -2,7 +2,6 @@ package uk.org.binky.jchan;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -12,18 +11,18 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     private final long id;
     private final List<RecvTX<T>> recvers = new ArrayList<>();
     private final List<SendTX<T>> senders = new ArrayList<>();
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private boolean closed = false;
 
     static <T> Chan<T> asChan(final SChan<T> sch) {
         if (sch instanceof Chan) {
-            return (Chan<T>)sch;
+            return (Chan<T>) sch;
         }
         throw new InvalidChannelException("invalid channel type");
     }
 
     static <T> Chan<T> asChan(final RChan<T> rch) {
         if (rch instanceof Chan) {
-            return (Chan<T>)rch;
+            return (Chan<T>) rch;
         }
         throw new InvalidChannelException("invalid channel type");
     }
@@ -45,9 +44,10 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     public synchronized void close() {
-        if (!closed.compareAndSet(false, true)) {
+        if (closed) {
             throw new ChannelAlreadyClosedException("this channel was already closed");
         }
+        closed = true;
         for (final RecvTX<T> tx : recvers) {
             tx.tryComplete(null);
         }
@@ -72,7 +72,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     synchronized boolean complete(final SendTX<T> stx) {
-        if (closed.get()) {
+        if (closed) {
             throw new SendOnClosedChannelException("attempted to send on a closed channel");
         }
         for (int i = 0; i < recvers.size(); i++) {
@@ -87,7 +87,7 @@ public class Chan<T> implements Comparable<Chan>, RChan<T>, SChan<T> {
     }
 
     synchronized boolean complete(final RecvTX<T> rtx) {
-        if (closed.get()) {
+        if (closed) {
             rtx.close();
             return true;
         }
